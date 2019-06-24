@@ -78,7 +78,8 @@ class VMDom:
 
 #connect = KVMConnection()
 #connect.getConnection()
-#name = connect.listVM()['active'][0]
+#name = connect.listVM()
+#print(name)
 #domain = VMDom(name,connect.getConnection())
 #print(domain.getVNCPort())
 #domain.setVNCPassword('12345',connect.getConnection())
