@@ -1,0 +1,24 @@
+{% extends 'parent.html' %}
+
+{% block content %}
+<h1>Create a new Virtual Machine</h1>
+<hr>
+    <form action="{% url 'virtualmachines:vmcreate' %}" method='POST'>
+        <p>Name</p>
+        <input type="text" name = 'name' required='true'/>
+        <p>Memory</p>
+        <input type="text" name='memory'/>
+        <p>Disk Size</p>
+        <input type="text" name='disk'/>
+        <p>Image</p>
+        <input type="text" name='image'>
+        <p>OS</p>
+        <input type="text" name = 'os'>
+        <p>CPUS</p>
+        <input type="text" name='cpu'>
+        <p>Enable VNC</p>
+        <input type="checkbox" name='vnc'/>
+        <button type='submit' name='submit' value='Submit'>Create</button>
+        {% csrf_token %}
+    </form>
+{% endblock %}
