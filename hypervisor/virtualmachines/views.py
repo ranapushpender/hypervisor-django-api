@@ -20,4 +20,21 @@ def vmlist_view(request):
         activeVM= conn.listVM()['active']
         conn.closeConnection()
         return render(request,'virtualmachines/vmlist.html',{'activevm':activeVM,'inactivevm':inactiveVM})
-    
+
+def vmcreate_view(request):
+    conn=KVMConnection()
+    conn.getConnection()
+    if(request.method=='POST'):
+        data= request.POST
+        vnc=False
+        if(data['vnc']):
+            vnc=True
+        conn.createVM(data['name'],data['cpu'],data['memory'],data['image'],data['disk'],data['os'],vnc)
+        conn.closeConnection()
+        return redirect('virtualmachines:vmlist')
+    return render(request,'virtualmachines/vmcreate.html')
+
+def vmmanage_view(request,slug):
+    conn=KVMConnection()
+    domain = VMDom(slug,conn.getConnection())
+    return render(request,'virtualmachines/vmmanage.html',{'slug':slug})
