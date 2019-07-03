@@ -25,7 +25,7 @@ app_name='hypervisor'
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('',views.home_view, name='home'),
-    path('vms/',include('virtualmachines.urls')),
+    path('machines/',include('virtualmachines.urls')),
 ]
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
