@@ -60,7 +60,6 @@ def vmdetail_view(request,vmname):
     conn.getConnection()
     responseObj={}
     domain = VMDom(vmname,conn.getConnection())
-    log(domain.dom)
     if(domain.dom==None):
         return HttpResponse(status=404)
 
@@ -70,6 +69,7 @@ def vmdetail_view(request,vmname):
         elif(request.POST['action']=='forcestop'):
             domain.forceStopVM()
         elif(request.POST['action']=='start'):
+            log('Startign VM')
             domain.startVM()
         responseObj= domain.getInfo()
         

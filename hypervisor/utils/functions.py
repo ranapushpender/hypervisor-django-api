@@ -3,6 +3,10 @@ import os as OS
 import subprocess
 import xml.etree.ElementTree as ET
 from logging import error as log
+from uuid import uuid4
+from xmls import storagePoolXML,volumeXML
+
+poolpath='/home/pushpender/mypools/'
 
 class KVMConnection:
     
@@ -67,6 +71,7 @@ class VMDom:
             self.dom = None
 
     def startVM(self):
+        log('started')
         self.dom.create()
 
     def shutdownVM(self):
@@ -179,24 +184,172 @@ class VMDom:
         disks = root.findall('./devices/disk')
         for disk in disks:
             if disk.get('device')=='cdrom':
-                return disk.find('./source').get('file')
+                if disk.find('./source') != None:
+                    isopath= disk.find('./source').get('file')
+                else:
+                    return None
+                isoname=""
+                for i in range(len(isopath)-1,0,-1):
+                    if(isopath[i]=='/'):
+                        break
+                    else:
+                        isoname = isopath[i] + isoname
+                return isoname
     
-    def getState(stateNum):
-        if stateNum==1:
-            return 'Running'
-        elif stateNum==3:
-            return 'Paused'
-        elif stateNum==5:
-            return 'Stopped'
+    def getBootDevices(self):
+        root = ET.fromstring(self.dom.XMLDesc())
+        bootDevices = []
+        disks = root.find('./os').findall('./boot')
+        for disk in disks:
+            bootDevices.append(disk.get('dev'))
+        return bootDevices
+    
+    def setRam(self,ram):
+        self.dom.setMemory(ram)
+        return 1
+    
+    def setCpu(self,cpus):
+        self.dom.setVcpus(cpus)
+
+    def getCpuStats(self):
+        return self.dom.getCPUStats(True)[0].get('cpu_time')/1000000000
+
+    def getMemoryStats(self):
+        return self.dom.memoryStats().get('actual')
+    
+class StoragePool:
+    pool=None
+    def __init__(self,con,poolname='default'):
+        self.pool = con.storagePoolLookupByName(poolname)
+    
+    def isAvailable(self):
+        if self.pool == None:
+            return False
+        else:
+            return True
+    
+    def isActive(self):
+        return self.pool.isActive()
+    
+    def startPool(self):
+        if self.pool!=None:
+            self.pool.create()
+
+    def deletePool(self):
+        if self.pool!=None:
+            self.pool.undefine()
+
+    def stopPool(self):
+        if self.pool!=None:
+            self.pool.stop()
+
+    def isAutoStart(self):
+        return self.pool.autostart()
+
+    def toggleAutoStart(self):
+        self.pool.setAutostart(not self.pool.autostart())
+
+    def getPoolInfo(self):
+        info = self.pool.info()
+        return{
+            'name':self.pool.name(),
+            'uuid':self.pool.UUIDString(),
+            'volumes':self.pool.numOfVolumes(),
+            'state':info[0],
+            'capacity':info[1],
+            'allocation':info[2],
+            'available':info[3]
+        }
+
+    def getVolumeInfo(self):
+        volumes = []
+        volNames = self.pool.listVolumes()
+        for name in volNames:
+            volInfo=self.pool.storageVolLookupByName(name).info()
+            log(self.pool.storageVolLookupByName(name).XMLDesc())
+            vol ={
+                'name':name,
+                'type':volInfo[0],
+                'capacity':volInfo[1],
+                'allocation':volInfo[2]
+            }
+            volumes.append(vol)
+        return volumes
+            
+    def createVolume(self,name,allocation,max_size):
+        if name+'.qcow2' in self.pool.listVolumes():
+            return -1
+        xmlData= volumeXML
+        root = ET.fromstring(xmlData)
+        root.find('./name').text=name+'.qcow2'
+        root.find('./allocation').text=str(allocation)
+        root.find('./capacity').text=str(max_size)
+        root.find('./target').find('./path').text=poolpath+str(self.getPoolInfo().get('name'))+'/'+name+'.qcow2'
+        ret = self.pool.createXML(ET.tostring(root).decode())
+        return ret
+
+    def deleteVolume(self,name):
+        if name in self.pool.listVolumes():
+            volume = self.pool.storageVolLookupByName(name)
+            volume.wipe(0)
+            volume.delete(0)
+
+    @staticmethod
+    def listAllPools(con):
+        pools = con.listAllStoragePools(0)
+        poolNames = []
+        for pool in pools:
+            poolNames.append(pool.name())
+        return poolNames
+    
+    @staticmethod
+    def createPool(con,name):
+        if name in StoragePool.listAllPools(con):
+            return -1
+        else:
+            retcode = subprocess.call(['mkdir',poolpath+name])
+            if retcode!=0:
+                #return -1
+                print('Exists')
+
+            xmlData = storagePoolXML
+            root = ET.fromstring(xmlData)
+            root.find('./name').text=name
+            root.find('./target').find('./path').text='/home/pushpender/mypools/'+name
+            con.storagePoolDefineXML(ET.tostring(root).decode())
+            return 1
+
+
+def getState(stateNum):
+    if stateNum==1:
+        return 'Running'
+    elif stateNum==3:
+        return 'Paused'
+    elif stateNum==5:
+        return 'Stopped'
 
 kvm = KVMConnection()
 kvm.getConnection()
-
-domain = VMDom('HI-VM-V3',kvm.getConnection())
+#log(StoragePool.listAllPools(kvm.getConnection()))
+#defaultPool = StoragePool.listAllPools(poolname='pisty',kvm.getConnection())[0]
+#log(StoragePool.createPool(kvm.getConnection(),'pisty'))
+pool = StoragePool(kvm.getConnection(),poolname='pisty')
+pool.deletePool()
+#pool.getVolumeInfo()
+#log(pool.getVolumeInfo())
+#pool.stopPool()
+#domain = VMDom('generic',kvm.getConnection())
+#log(domain.getXML())
+#pool = StoragePool(kvm.getConnection())
+#print(pool.isAvailable())
+#pool.getInfo()
+#log(domain.getMemoryStats())
+#log(domain.getBootDevices())
 #domain.unMountIso(kvm.getConnection())
-log(domain.getDisks())
+#log(domain.getDisks())
 #log(domain.getXML())
 #domain.mountIso(kvm.getConnection(),'image')
+#log(domain.getMountedIso())
 #omain.changeBootDevice(kvm.getConnection(),'cdrom')
 #domain.changeBootDevice(kvm.getConnection(),'hd')
 #domain.getDiskInfo(kvm.getConnection())
