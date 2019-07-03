@@ -6,7 +6,6 @@ import re
 app_name='virtualmachines'
 
 urlpatterns = [
-    path('create/',views.vmcreate_view,name='vmcreate'),
-    re_path(r'^manage/(?P<slug>[\w-]+)/$',views.vmmanage_view,name='vmmanage'),
-    path('',views.vmlist_view,name='vmlist')
+    path('',views.vms_view,name='vms'),
+    path('<vmname>',views.vmdetail_view,name='vmdetail')
 ]
