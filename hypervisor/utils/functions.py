@@ -6,6 +6,7 @@ from logging import error as log
 from uuid import uuid4
 from .xmls import storagePoolXML,volumeXML
 
+
 poolpath='/home/pushpender/mypools/'
 
 class KVMConnection:
@@ -42,11 +43,18 @@ class KVMConnection:
                 inactiveInfo.append(info)
             return {'active':activeInfo,'inactive':inactiveInfo}
 
-    def createVM(self,name,cpu,memory,image,size,os,vnc):
+    def createVM(self,name,cpu,memory,imagepath,poolname,volname,os,vnc):
+        pool = StoragePool(self.con,poolname)
+        if pool==None:
+            return 1
+        volume = pool.getVolume(volname)
+        if volume == None:
+            return 1
+        volpath = ET.fromstring(volume.XMLDesc()).find('./target/path').text
         if vnc:
-            retcode = subprocess.call(['virt-install','--disk='+name+'.qcow2,size='+str(size),'--name='+name,'--vcpus='+str(cpu),'--memory='+str(memory),'--cdrom=/home/pushpender/Downloads/'+image,'--graphics=vnc,listen=0.0.0.0','--noautoconsole'])
+            retcode = subprocess.call(['virt-install','--disk='+volpath+',device=disk,bus=virtio','--name='+name,'--vcpus='+str(cpu),'--memory='+str(memory),'--cdrom='+imagepath,'--graphics=vnc,listen=0.0.0.0','--noautoconsole'])
         else:
-            retcode = subprocess.call(['virt-install','--disk='+name+'.qcow2,size='+str(size),'--name='+name,'--vcpus='+str(cpu),'--memory='+str(memory),'--cdrom=/home/pushpender/Downloads/'+image])
+            retcode = subprocess.call(['virt-install','--disk='+volpath+',device=disk,bus=virtio ','--name='+name,'--vcpus='+str(cpu),'--memory='+str(memory),'--cdrom='+imagepath])
         log(retcode)
         return(retcode)
     
@@ -124,7 +132,7 @@ class VMDom:
         cdrom = ET.Element('boot')
         cdrom.set('dev','cdrom')
         os.append(cdrom)
-        log(ET.tostring(os))
+        #log(ET.tostring(os))
         self.dom.undefine()
         self.dom =con.defineXML(ET.tostring(root).decode())
     
@@ -136,27 +144,28 @@ class VMDom:
         temp=[]
         for vdisk in disks:
             if vdisk.get('dev') != disk:
-                log('VDISK DEV: '+vdisk.get('dev'))
+                #log('VDISK DEV: '+vdisk.get('dev'))
                 temp.append(vdisk)
                 os.remove(vdisk)
 
         for ele in temp:
             os.append(ele)
-        log(ET.tostring(root).decode())
+        #log(ET.tostring(root).decode())
         self.dom.undefine()
         self.dom =con.defineXML(ET.tostring(root).decode())
     
-    def mountIso(self,con,name):
+    def mountIso(self,con,isopath):
         root = ET.fromstring(self.dom.XMLDesc())
         disks = root.findall('./devices/disk')
+        log('Mount iso path: '+isopath)
         for disk in disks:
             if disk.get('device')=='cdrom':
                 source = disk.find('./source')
                 if source:
-                    source.set('file','/home/pushpender/Downloads/'+name+'.iso')
+                    source.set('file',isopath)
                 else:
                     sourceElement = ET.Element('source')
-                    sourceElement.set('file','/home/pushpender/Downloads/'+name+'.iso')
+                    sourceElement.set('file',isopath)
                     disk.append(sourceElement)
         #log(ET.tostring(root).decode())
         self.dom.undefine()
@@ -235,6 +244,9 @@ class StoragePool:
         else:
             return True
     
+    def getXML(self):
+        return self.pool.XMLDesc()
+
     def isActive(self):
         return self.pool.isActive()
     
@@ -265,15 +277,22 @@ class StoragePool:
             'state':info[0],
             'capacity':info[1],
             'allocation':info[2],
-            'available':info[3]
+            'available':info[3],
+            'volumes':self.getVolumeInfo()
         }
 
+    def getVolume(self,name):
+        return self.pool.storageVolLookupByName(name)
+
+    def getVolumeNames(self):
+        return self.pool.listVolumes()
+    
     def getVolumeInfo(self):
         volumes = []
         volNames = self.pool.listVolumes()
         for name in volNames:
             volInfo=self.pool.storageVolLookupByName(name).info()
-            log(self.pool.storageVolLookupByName(name).XMLDesc())
+           # log(self.pool.storageVolLookupByName(name).XMLDesc())
             vol ={
                 'name':name,
                 'type':volInfo[0],
@@ -296,6 +315,7 @@ class StoragePool:
         return ret
 
     def deleteVolume(self,name):
+        log('starting delete of '+name)
         if name in self.pool.listVolumes():
             volume = self.pool.storageVolLookupByName(name)
             volume.wipe(0)
