@@ -4,7 +4,7 @@ import subprocess
 import xml.etree.ElementTree as ET
 from logging import error as log
 from uuid import uuid4
-from xmls import storagePoolXML,volumeXML
+from .xmls import storagePoolXML,volumeXML
 
 poolpath='/home/pushpender/mypools/'
 
@@ -102,12 +102,18 @@ class VMDom:
    
     def getInfo(self):
         info = self.dom.info()
-        return {
+        obj = {
                     'name':self.dom.name(),
                     'state':getState(info[0]),
                     'memory':info[1],
-                    'cpus':info[3]
+                    'cpus':info[3],
+                    'iso:':self.getMountedIso(),
+                    'disks':self.getDisks()
                 }
+        if info[0]==1:
+            obj['cpu-usage']=self.getCpuStats()
+            obj['memory-usage']=self.getMemoryStats()
+        return obj
 
     def getXML(self):
         print(self.dom.XMLDesc())
@@ -136,7 +142,7 @@ class VMDom:
 
         for ele in temp:
             os.append(ele)
-
+        log(ET.tostring(root).decode())
         self.dom.undefine()
         self.dom =con.defineXML(ET.tostring(root).decode())
     
@@ -173,10 +179,10 @@ class VMDom:
 
     def getDisks(self):
         root = ET.fromstring(self.dom.XMLDesc())
-        disks = root.findall('./devices/disk')
+        disks = root.findall('./os/boot')
         diskInfo=[]
         for disk in disks:
-            diskInfo.append(disk.get('device'))
+            diskInfo.append(disk.get('dev'))
         return diskInfo
     
     def getMountedIso(self):
@@ -212,6 +218,7 @@ class VMDom:
         self.dom.setVcpus(cpus)
 
     def getCpuStats(self):
+        log(self.dom.getCPUStats(True))
         return self.dom.getCPUStats(True)[0].get('cpu_time')/1000000000
 
     def getMemoryStats(self):
@@ -328,13 +335,13 @@ def getState(stateNum):
     elif stateNum==5:
         return 'Stopped'
 
-kvm = KVMConnection()
-kvm.getConnection()
+#kvm = KVMConnection()
+#kvm.getConnection()
 #log(StoragePool.listAllPools(kvm.getConnection()))
 #defaultPool = StoragePool.listAllPools(poolname='pisty',kvm.getConnection())[0]
 #log(StoragePool.createPool(kvm.getConnection(),'pisty'))
-pool = StoragePool(kvm.getConnection(),poolname='pisty')
-pool.deletePool()
+#pool = StoragePool(kvm.getConnection(),poolname='pisty')
+#pool.deletePool()
 #pool.getVolumeInfo()
 #log(pool.getVolumeInfo())
 #pool.stopPool()

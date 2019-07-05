@@ -71,6 +71,17 @@ def vmdetail_view(request,vmname):
         elif(request.POST['action']=='start'):
             log('Startign VM')
             domain.startVM()
+        elif request.POST['action']=='mount':
+            if not request.POST['isoname']:
+                return HttpResponse(status=404)
+            else:
+                domain.mountIso(conn.getConnection(),'image')
+        elif request.POST['action']=='unmount':
+            domain.unMountIso(conn.getConnection())
+        elif request.POST['action']=='bootdevice':
+            domain.changeBootDevice(conn.getConnection(),request.POST['device'])
+        elif request.POST['action']=='enablecd':
+            domain.enableCDRom(conn.getConnection())
         responseObj= domain.getInfo()
         
     
