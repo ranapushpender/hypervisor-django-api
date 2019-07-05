@@ -4,6 +4,9 @@ from utils.functions import KVMConnection,VMDom
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from logging import error as log
+from isos.models import IsoModel
+import os
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Create your views here.
 def vmlist_view(request):
     conn= KVMConnection()
@@ -37,10 +40,13 @@ def vms_view(request):
 
     elif request.method=='POST':
         data= request.POST
+        iso = IsoModel.objects.get(id=data['image'])
+        isoname = iso.file.name
         vnc=False
         if(data['vnc']):
             vnc=True
-        retcode = conn.createVM(data['name'],data['cpu'],data['memory'],data['image'],data['disk'],data['os'],vnc)
+        
+        retcode = conn.createVM(data['name'],data['cpu'],data['memory'],BASE_DIR+'/media/'+isoname,data['pool'],data['volume'],data['os'],vnc)
         conn.closeConnection()
         
         responseObj={}
@@ -72,10 +78,11 @@ def vmdetail_view(request,vmname):
             log('Startign VM')
             domain.startVM()
         elif request.POST['action']=='mount':
-            if not request.POST['isoname']:
+            if not request.POST['isoid']:
                 return HttpResponse(status=404)
             else:
-                domain.mountIso(conn.getConnection(),'image')
+                isopath = BASE_DIR+'/media/' + IsoModel.objects.get(id=request.POST['isoid']).file.name
+                domain.mountIso(conn.getConnection(),isopath)
         elif request.POST['action']=='unmount':
             domain.unMountIso(conn.getConnection())
         elif request.POST['action']=='bootdevice':
