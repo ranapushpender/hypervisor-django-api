@@ -32,7 +32,7 @@ def vmlist_view(request):
 def vms_view(request):
     conn= KVMConnection()
     conn.getConnection()
-
+    
     if request.method=='GET':
         vmsInfo=conn.listVM()
         conn.closeConnection()
@@ -105,6 +105,7 @@ def vmcreate_view(request):
     conn.getConnection()
     if(request.method=='POST'):
         data= request.POST
+        log(request.POST)
         vnc=False
         if(data['vnc']):
             vnc=True
