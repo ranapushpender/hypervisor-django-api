@@ -63,12 +63,18 @@ class KVMConnection:
     
     def getInfo(self,domain):
         info = domain.info()
-        return {
+        infoObj = {
                     'name':domain.name(),
                     'state':getState(info[0]),
                     'memory':info[1],
-                    'cpus':info[3]
+                    'cpus':info[3],
+                    'os':'Ubuntu',
                 }
+        if(info[0]==1):
+            infoObj['action']='stop'
+        else:
+            infoObj['action']='start'
+        return infoObj
 
 class VMDom:
     dom=None
@@ -116,11 +122,15 @@ class VMDom:
                     'memory':info[1],
                     'cpus':info[3],
                     'iso:':self.getMountedIso(),
-                    'disks':self.getDisks()
+                    'disks':self.getDisks(),
+                    'os':'Ubuntu'
                 }
         if info[0]==1:
+            obj['action']='stop'
             obj['cpu-usage']=self.getCpuStats()
             obj['memory-usage']=self.getMemoryStats()
+        else:
+            obj['action']='start'
         return obj
 
     def getXML(self):
