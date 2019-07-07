@@ -21,11 +21,11 @@ def pools_view(request):
 @api_view(['GET','POST','DELETE'])
 def pool_info_view(request,poolname):
     conn = KVMConnection()
+    log(poolname)
     if poolname not in StoragePool.listAllPools(conn.getConnection()):
             return HttpResponse(status=404)
     
     pool = StoragePool(conn.getConnection(),poolname)
-
     if request.method=='POST':
         data = request.POST
         if data['name'] in pool.getVolumeNames():
@@ -36,6 +36,10 @@ def pool_info_view(request,poolname):
     if request.method == 'DELETE':
         pool.deletePool()
         return Response({'status':'ok','message':'Pool deleted successfully'})
+
+    if request.method == 'GET':
+        if not pool.isActive() :
+            pool.startPool()
 
     return Response(pool.getPoolInfo())
 
