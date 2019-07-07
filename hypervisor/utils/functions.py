@@ -6,7 +6,6 @@ from logging import error as log
 from uuid import uuid4
 from .xmls import storagePoolXML,volumeXML
 
-
 poolpath='/home/pushpender/mypools/'
 
 class KVMConnection:
@@ -313,6 +312,8 @@ class StoragePool:
         return volumes
             
     def createVolume(self,name,allocation,max_size):
+        #log(name,allocation,max_size)
+        #return 0
         if name+'.qcow2' in self.pool.listVolumes():
             return -1
         xmlData= volumeXML
@@ -328,7 +329,7 @@ class StoragePool:
         log('starting delete of '+name)
         if name in self.pool.listVolumes():
             volume = self.pool.storageVolLookupByName(name)
-            volume.wipe(0)
+            #volume.wipe(0)
             volume.delete(0)
 
     @staticmethod
@@ -365,8 +366,9 @@ def getState(stateNum):
     elif stateNum==5:
         return 'Stopped'
 
-#kvm = KVMConnection()
-#kvm.getConnection()
+kvm = KVMConnection()
+kvm.getConnection()
+log(StoragePool.listAllPools(kvm.getConnection()))
 #log(StoragePool.listAllPools(kvm.getConnection()))
 #defaultPool = StoragePool.listAllPools(poolname='pisty',kvm.getConnection())[0]
 #log(StoragePool.createPool(kvm.getConnection(),'pisty'))
