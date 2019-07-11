@@ -15,7 +15,7 @@ def pools_view(request):
         else:
             StoragePool.createPool(conn.getConnection(),data['name'])
 
-    return Response(StoragePool.listAllPools(conn.getConnection()))
+    return Response(StoragePool.listAllPoolsInfo(conn.getConnection()))
     #elif request.method=='POST'
 
 @api_view(['GET','POST','DELETE'])

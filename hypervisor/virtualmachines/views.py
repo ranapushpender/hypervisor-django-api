@@ -89,11 +89,14 @@ def vmdetail_view(request,vmname):
             domain.changeBootDevice(conn.getConnection(),request.POST['device'])
         elif request.POST['action']=='enablecd':
             domain.enableCDRom(conn.getConnection())
-        responseObj= domain.getInfo()
+        responseObj= domain.getInfo(conn.getConnection())
         
     
     elif request.method=='GET':
-        responseObj= domain.getInfo()
+        if request.GET.get('action')=='stats':
+            responseObj= domain.getStats(pool=request.GET.get('pool'),volume=request.GET.get('volume'),con=conn.getConnection())
+        else:
+            responseObj= domain.getInfo(conn.getConnection())
 
     conn.closeConnection()
     return Response(responseObj)

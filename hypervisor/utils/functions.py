@@ -62,6 +62,7 @@ class KVMConnection:
     
     def getInfo(self,domain):
         info = domain.info()
+        
         infoObj = {
                     'name':domain.name(),
                     'state':getState(info[0]),
@@ -112,8 +113,34 @@ class VMDom:
         else:
             xmlC.create()
         return xmlC
+
+    def getVolumeInfoFromPath(self,volpath,con):
+        i=0
+        for i in range(len(volpath)-1,0,-1):
+            if volpath[i]=='/':
+                break
+        
+        volpoolpath = volpath[:i]
+        log(volpoolpath)
+
+        for poolname in StoragePool.listAllPools(con):
+            pool = con.storagePoolLookupByName(poolname)
+            poolpath = ET.fromstring(pool.XMLDesc()).find('./target/path').text
+            if poolpath == volpoolpath:
+                return {'name':volpath[i+1:],'pool':poolname}
+        return None
+
+    def getAttachedVolume(self,con):
+        xmlData = self.getXML()
+        disks = ET.fromstring(xmlData).findall('./devices/disk')
+        diskInfos = []
+        for disk in disks:
+            if disk.get('device')=='disk':
+                volpath = disk.find('./source').get('file')
+                diskInfos.append(self.getVolumeInfoFromPath(volpath,con))
+        return diskInfos
    
-    def getInfo(self):
+    def getInfo(self,con):
         info = self.dom.info()
         obj = {
                     'name':self.dom.name(),
@@ -122,18 +149,35 @@ class VMDom:
                     'cpus':info[3],
                     'iso:':self.getMountedIso(),
                     'disks':self.getDisks(),
-                    'os':'Ubuntu'
+                    'os':'Ubuntu',
+                    'volumes':self.getAttachedVolume(con),
                 }
         if info[0]==1:
             obj['action']='stop'
-            obj['cpu-usage']=self.getCpuStats()
-            obj['memory-usage']=self.getMemoryStats()
+            #obj['cpuusage']=self.getCpuStats()
+            #obj['memoryusage']=self.dom.memoryStats()['rss']
         else:
             obj['action']='start'
         return obj
+    
+    def getStats(self,pool,volume,con):
+        #log(con.getCPUStats(True))
+        if not self.dom.isActive():
+            return{'cpuusage': 0, 'memoryusage': 0, 'disktotal': 0, 'diskused': 0}
+
+        info = self.dom.info()
+        volumeinfo = (StoragePool(con=con,poolname=pool)).getVolume(volume).info()
+        obj = {
+            'cpuusage':self.getCpuStats(),
+            'memoryusage':self.dom.memoryStats()['rss'],
+            'disktotal':volumeinfo[1],
+            'diskused':volumeinfo[2]
+        }
+        return obj
 
     def getXML(self):
-        print(self.dom.XMLDesc())
+        #print(self.dom.XMLDesc())
+        return self.dom.XMLDesc()
     
     def enableCDRom(self,con):
         root=ET.fromstring(self.dom.XMLDesc())
@@ -237,7 +281,8 @@ class VMDom:
 
     def getCpuStats(self):
         log(self.dom.getCPUStats(True))
-        return self.dom.getCPUStats(True)[0].get('cpu_time')/1000000000
+        cpuinfo = self.dom.getCPUStats(True)[0]
+        return cpuinfo.get('cpu_time')
 
     def getMemoryStats(self):
         return self.dom.memoryStats().get('actual')
@@ -278,6 +323,7 @@ class StoragePool:
         self.pool.setAutostart(not self.pool.autostart())
 
     def getPoolInfo(self):
+        
         info = self.pool.info()
         return{
             'name':self.pool.name(),
@@ -338,6 +384,18 @@ class StoragePool:
         poolNames = []
         for pool in pools:
             poolNames.append(pool.name())
+        return poolNames
+
+    @staticmethod
+    def listAllPoolsInfo(con):
+        pools = con.listAllStoragePools(0)
+        poolNames = []
+        for pool in pools:
+            respObj = {
+                'name': pool.name(),
+                'info': pool.info()
+            }
+            poolNames.append(respObj)
         return poolNames
     
     @staticmethod
