@@ -114,6 +114,27 @@ class VMDom:
             xmlC.create()
         return xmlC
 
+    def setMemory(self,memory,con):
+        xmlData = self.getXML()
+        log(xmlData)
+        mod = ET.fromstring(xmlData)
+        mod.find('./memory').text=memory
+        mod.find('./currentMemory').text=memory
+        log(ET.tostring(mod).decode())
+        self.dom.undefine()
+        self.dom = con.defineXML(ET.tostring(mod).decode())
+        return 1
+    
+    def setVCpu(self,cpu,con):
+        xmlData = self.getXML()
+        log(xmlData)
+        mod = ET.fromstring(xmlData)
+        mod.find('./vcpu').text=cpu
+        log(ET.tostring(mod).decode())
+        self.dom.undefine()
+        self.dom = con.defineXML(ET.tostring(mod).decode())
+        return 1
+
     def getVolumeInfoFromPath(self,volpath,con):
         i=0
         for i in range(len(volpath)-1,0,-1):
@@ -147,7 +168,7 @@ class VMDom:
                     'state':getState(info[0]),
                     'memory':info[1],
                     'cpus':info[3],
-                    'iso:':self.getMountedIso(),
+                    'iso':self.getMountedIso(),
                     'disks':self.getDisks(),
                     'os':'Ubuntu',
                     'volumes':self.getAttachedVolume(con),
