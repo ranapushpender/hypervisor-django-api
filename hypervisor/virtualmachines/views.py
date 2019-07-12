@@ -66,9 +66,13 @@ def vmdetail_view(request,vmname):
     conn.getConnection()
     responseObj={}
     domain = VMDom(vmname,conn.getConnection())
+    log('Entered Request')
     if(domain.dom==None):
+        log('None')
         return HttpResponse(status=404)
 
+    log('Domain not none proceeding')
+    log(request.POST)
     if request.method=='POST':
         if(request.POST['action']=='stop'):
             domain.shutdownVM()
@@ -78,17 +82,21 @@ def vmdetail_view(request,vmname):
             log('Startign VM')
             domain.startVM()
         elif request.POST['action']=='mount':
-            if not request.POST['isoid']:
+            if not request.POST['value']:
                 return HttpResponse(status=404)
             else:
-                isopath = BASE_DIR+'/media/' + IsoModel.objects.get(id=request.POST['isoid']).file.name
+                isopath = BASE_DIR+'/media/' + IsoModel.objects.get(id=request.POST['value']).file.name
                 domain.mountIso(conn.getConnection(),isopath)
         elif request.POST['action']=='unmount':
             domain.unMountIso(conn.getConnection())
         elif request.POST['action']=='bootdevice':
-            domain.changeBootDevice(conn.getConnection(),request.POST['device'])
+            domain.changeBootDevice(conn.getConnection(),request.POST['value'])
         elif request.POST['action']=='enablecd':
             domain.enableCDRom(conn.getConnection())
+        elif request.POST['action']=='setmemory':
+            domain.setMemory(request.POST.get('value'),conn.getConnection())
+        elif request.POST['action']=='setcpu':
+            domain.setVCpu(request.POST.get('value'),conn.getConnection())
         responseObj= domain.getInfo(conn.getConnection())
         
     
