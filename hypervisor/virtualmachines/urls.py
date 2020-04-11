@@ -7,5 +7,6 @@ app_name='virtualmachines'
 
 urlpatterns = [
     path('',views.vms_view,name='vms'),
-    path('<vmname>',views.vmdetail_view,name='vmdetail')
+    path('<vmname>',views.vmdetail_view,name='vmdetail'),
+    path('<vmname>/vnc/',views.vnc_view,name='vnc')
 ]

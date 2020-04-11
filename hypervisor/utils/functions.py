@@ -212,6 +212,7 @@ class VMDom:
     
     def changeBootDevice(self,con,disk):
         root=ET.fromstring(self.dom.XMLDesc())
+        
         os = root.find('./os')
         disks = os.findall('./boot')
 
@@ -242,6 +243,14 @@ class VMDom:
                     sourceElement.set('file',isopath)
                     disk.append(sourceElement)
         #log(ET.tostring(root).decode())
+        #boot_devices = self.getBootDevices()
+        #if len(boot_devices) <=0 :
+        #    hd_boot = ET.Element('boot')
+        #    hd_boot.set('dev','hd')
+        #    os = root.find('./os')
+        #    os.append(hd_boot)
+        #log(ET.tostring(root).decode())
+
         self.dom.undefine()
         self.dom = con.defineXML(ET.tostring(root).decode())
     
@@ -256,6 +265,11 @@ class VMDom:
                 if source!=None:
                     log('removing source')
                     disk.remove(source)
+        boot_devices = root.findall('./os/boot')
+        for boot_device in boot_devices:
+            if boot_device.get('dev')=='cdrom':
+                os = root.find('./os')
+                os.remove(boot_device)
         #log(ET.tostring(root).decode())
         self.dom.undefine()
         self.dom = con.defineXML(ET.tostring(root).decode())
