@@ -5,7 +5,10 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from logging import error as log
 from isos.models import IsoModel
+import jwt
 import os
+import datetime
+
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 # Create your views here.
 def vmlist_view(request):
@@ -56,7 +59,7 @@ def vms_view(request):
         else:
             responseObj['status']='error'
             responseObj['message']='Machine creation failed'
-
+        
         return Response(responseObj)
 
 
@@ -66,6 +69,8 @@ def vmdetail_view(request,vmname):
     conn.getConnection()
     responseObj={}
     domain = VMDom(vmname,conn.getConnection())
+    log(domain.getDisks())
+    log("DIsks are")
     log('Entered Request')
     if(domain.dom==None):
         log('None')
@@ -87,6 +92,7 @@ def vmdetail_view(request,vmname):
             else:
                 isopath = BASE_DIR+'/media/' + IsoModel.objects.get(id=request.POST['value']).file.name
                 domain.mountIso(conn.getConnection(),isopath)
+                domain.enableCDRom(conn.getConnection());
         elif request.POST['action']=='unmount':
             domain.unMountIso(conn.getConnection())
         elif request.POST['action']=='bootdevice':
@@ -106,10 +112,21 @@ def vmdetail_view(request,vmname):
         else:
             responseObj= domain.getInfo(conn.getConnection())
 
+        
+
     conn.closeConnection()
     return Response(responseObj)
 
-
+@api_view(['get'])
+def vnc_view(request,vmname):
+    conn= KVMConnection()
+    conn.getConnection()
+    domain = VMDom(vmname,conn.getConnection())
+    if request.method=='GET':
+        token = jwt.encode({'host':'localhost','port':domain.getVNCPort(),'exp':datetime.datetime.now().timestamp()+900},'secret',algorithm='HS256')
+        return Response({
+            'token':token
+        })
 
 def vmcreate_view(request):
     conn=KVMConnection()
