@@ -28,6 +28,7 @@ urlpatterns = [
     path('machines/',include('virtualmachines.urls')),
     path('storage/',include('storage.urls')),
     path('isos/',include('isos.urls')),
+    path('docker/',include('docker.urls')),
 ]
 urlpatterns += staticfiles_urlpatterns()
 urlpatterns += static(settings.MEDIA_URL,document_root=settings.MEDIA_ROOT)
