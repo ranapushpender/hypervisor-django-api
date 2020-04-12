@@ -508,6 +508,7 @@ class Container:
         text = createProcessSingleine(options)
         text = text.split('  ')
         text = list(filter(lambda w : w!='' and w!=' ',text))
+        
         return {
             "name" : text[1],
             "cpu" : text[2],
