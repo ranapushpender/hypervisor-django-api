@@ -65,4 +65,5 @@ def terminal(request,cid):
             terminal = Terminal()
             terminal.connect(cid)
             return Response(terminal.send_command(request.POST["cmd"]))
+            
 
