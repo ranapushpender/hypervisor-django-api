@@ -1,6 +1,6 @@
 from django.shortcuts import render,redirect
 from django.http import HttpResponse
-from utils.functions import KVMConnection,VMDom,Container,Docker
+from utils.functions import KVMConnection,VMDom,Container,Docker,Terminal
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from logging import error as log
@@ -54,3 +54,15 @@ def get_container_stats(request,cid):
         response[key] = value
     #log(st)
     return Response(response)
+
+@api_view(['POST'])
+def terminal(request,cid):
+    docker = Docker()
+    if docker.findContainer(cid)==None:
+        return Response(cid,status=status.HTTP_404_NOT_FOUND)
+    else:
+        if request.method=="POST":
+            terminal = Terminal()
+            terminal.connect(cid)
+            return Response(terminal.send_command(request.POST["cmd"]))
+
