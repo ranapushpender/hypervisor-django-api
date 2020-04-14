@@ -16,16 +16,18 @@ import json
 @api_view(['GET','POST'])
 def get_containers(request):
     docker = Docker()
-        
+    errors = None
     if request.method == "POST":
         log("Creating container : "+request.POST["options"])
-        log(docker.createContainer(request.POST["options"])[1])
+        errors = docker.createContainer(request.POST["options"])[1]
+        log(errors)
 
     containers = {
         "payload" : [vars(container) for container in docker.getContainers()]
     }
     if len(containers)<=0:
         return Response(containers,status=status.HTTP_204_NO_CONTENT)
+    containers["error"] = errors
     return Response(containers,status=status.HTTP_200_OK)
 
 @api_view(['GET','POST','DELETE'])
