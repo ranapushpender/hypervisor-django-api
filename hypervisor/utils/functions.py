@@ -551,7 +551,31 @@ class Docker:
         result = createProcess(options)
         return result
                 
-
+class Terminal:
+    cwd = '/'
+    def connect(self,cid):
+        self.cid = cid
+    def send_command(self,cmd):
+        process = subprocess.Popen(["docker","exec",'-w',self.cwd,self.cid,'bash','-c', cmd],stderr=subprocess.PIPE,stdout=subprocess.PIPE,stdin=subprocess.PIPE,encoding='UTF-8')
+        return {"message":[x.replace('\n','') for x in process.stdout.readlines()],"error":process.stderr.readlines()}
+    def get_directories(self):
+        process = subprocess.Popen(["docker","exec",'-w',self.cwd,self.cid,'bash','-c', "find . -type d -maxdepth 1"],stderr=subprocess.PIPE,stdout=subprocess.PIPE,stdin=subprocess.PIPE,encoding='UTF-8')
+        directories = process.stdout.readlines()
+        directories = ([directory.replace('\n','') for directory in directories],process.stderr.readlines())
+        return directories
+    def get_files(self):
+        process = subprocess.Popen(["docker","exec",'-w',self.cwd,self.cid,'bash','-c', "find . -type f -maxdepth 1"],stderr=subprocess.PIPE,stdout=subprocess.PIPE,stdin=subprocess.PIPE,encoding='UTF-8')
+        directories = process.stdout.readlines()
+        directories = [directory.replace('\n','') for directory in directories]
+        return directories
+    #def change_directory(self,di):
+        #if(di[0]=='/'):
+         #   process = subprocess.Popen(["docker","exec",self.cid,'bash','-c', 'cd',di],stderr=subprocess.PIPE,stdout=subprocess.PIPE,stdin=subprocess.PIPE,encoding='UTF-8')
+          #  obj = {"message":[x.replace('\n','') for x in process.stdout.readlines()],"error":process.stderr.readlines()}
+           # if(len(obj["message"])==0 and len(obj["error"])==0):
+            #    self.cwd = di
+             #   return self.cwd
+        #if(di==".."):
 
 #kvm = KVMConnection()
 #kvm.getConnection()

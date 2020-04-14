@@ -8,5 +8,7 @@ app_name = "docker"
 
 urlpatterns = [
     path('',views.get_containers),
+    #path('<cid>/',views.get_container_stats),
     path('<cid>/',views.get_container_stats),
+    path('<cid>/terminal/',views.terminal),
 ]
