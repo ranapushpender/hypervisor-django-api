@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="node_modules/xterm/css/xterm.css" />
+    <script src="node_modules/xterm/lib/xterm.js"></script>
+    <title>Document</title>
+</head>
+<body>
+    <div id="terminal"></div>
+      <script>
+        var term = new Terminal();
+        term.open(document.getElementById('terminal'));
+        command=""
+        ws = new WebSocket("ws://localhost:8766")
+        term.onKey((event)=>{
+            console.log(event.domEvent.key)
+            if(event.domEvent.key=="Enter")
+            {
+                console.log("HEre")
+                console.log(command)
+                ws.send(JSON.stringify({type:"command",command:"\r"}))
+                //command=""
+                return
+            }
+            //term.write(event.key)
+            ws.send(JSON.stringify({type:"command",command:event.key}))
+            command+= event.key
+        })
+       
+        ws.onopen = (event)=>{
+            console.log("************Opened**************")
+            console.log(event)
+            ws.send(JSON.stringify({
+                type: "begin",
+                cid: "183bc47d6823"
+            }))
+
+            setInterval(()=>{
+                if(ws.readyState==ws.open)
+                {
+                    ws.send('')
+                    console.log("keeping alive")
+                }
+            },1000)
+        }
+        ws.onmessage = (event)=>{
+            console.log(event)
+            let data = JSON.parse(event.data)
+            if(data.type=="status")
+            {
+                ws.send(JSON.stringify({type:"command",command:" "}))
+                console.log("Connected")
+                console.log(ws)
+            }
+            else if(data.type=="error")
+            {
+                console.log("Error : "+data.message)
+                return
+            }
+            else if(data.type=="success")
+            {
+                //term.write('\x1b[2K\r')    
+                let counter = command.length
+                /*for(let i=0;i<counter;i++ )
+                {
+                    term.write('\b \b')
+                }*/
+                command = ""
+                term.write(data.message)
+                console.log(data.message)
+                
+            }
+            
+        }
+        ws.onclose = function(){
+            
+            console.log("Closing")
+        }
+
+        
+        
+
+      </script>
+</body>
+</html>
