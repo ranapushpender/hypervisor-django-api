@@ -1,0 +1,1 @@
+sudo ./run 6080 --token-plugin JWTTokenApi
