@@ -6,7 +6,7 @@ from logging import error as log
 from uuid import uuid4
 from .xmls import storagePoolXML,volumeXML
 
-poolpath='/home/pushpender/mypools/'
+poolpath= OS.getcwd()+'/pools/'
 
 class KVMConnection:
     
@@ -446,7 +446,7 @@ class StoragePool:
             xmlData = storagePoolXML
             root = ET.fromstring(xmlData)
             root.find('./name').text=name
-            root.find('./target').find('./path').text='/home/pushpender/mypools/'+name
+            root.find('./target').find('./path').text=poolpath+name
             con.storagePoolDefineXML(ET.tostring(root).decode())
             return 1
 
