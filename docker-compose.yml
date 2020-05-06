@@ -6,7 +6,7 @@ services:
             - 8000:8000
         volumes:
             - /var/run/libvirt:/var/run/libvirt
-            - /home/pushpender/Apps/hypervisor-django-api/hypervisor:/src/app
+            - ./hypervisor:/src/app
             - /usr/bin/docker:/usr/bin/docker
             - /var/run/docker.sock:/var/run/docker.sock
         environment:
@@ -16,12 +16,12 @@ services:
         ports:
             - 6080:6080
         volumes:
-            - /home/pushpender/Apps/hypervisor-django-api/websockify:/src/app
+            - ./websockify:/src/app
         network_mode: host
     terminal:
         build: ./docker-console
         ports:
             - 8766:8766
         volumes:
-            - /home/pushpender/Apps/hypervisor-django-api/docker-console/console:/src/app
+            - ./docker-console/console:/src/app
             - /var/run/docker.sock:/var/run/docker.sock
