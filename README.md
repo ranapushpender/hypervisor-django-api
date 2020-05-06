@@ -22,3 +22,4 @@
 * require cors for websockify, terminal etc
 * BUG: volume list loaded by default is for wrong pool
 * Incase of using manjaro install libvirt acording to arch guide and enable docker service , libvirtd , and go to /etc/libvirt/qemu.conf find users =  and groups = and add your username of the current user instead of root
+* BUG: if iso one entry in vm detail screen we have to select it once to select default

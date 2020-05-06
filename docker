@@ -1,0 +1,2 @@
+#!/bin/bash
+sudo docker run --rm -it -v /var/run/libvirt:/var/run/libvirt -v /home/pushpender/Apps/hypervisor-django-api/hypervisor:/src/app -v /usr/bin/docker:/usr/bin/docker -e BASE_PATH=/home/pushpender/Apps/hypervisor-django-api/hypervisor -v /var/run/docker.sock:/var/run/docker.sock -p 8000:8000 f0b779dff209 bash

@@ -8,6 +8,7 @@ from .xmls import storagePoolXML,volumeXML
 import os
 
 poolpath= os.getcwd()+'/pools/'
+BASE_PATH = os.environ['BASE_PATH']
 
 class KVMConnection:
     
@@ -447,7 +448,7 @@ class StoragePool:
             xmlData = storagePoolXML
             root = ET.fromstring(xmlData)
             root.find('./name').text=name
-            root.find('./target').find('./path').text=poolpath+name
+            root.find('./target').find('./path').text=BASE_PATH+'/pools/'+name
             con.storagePoolDefineXML(ET.tostring(root).decode())
             return 1
 

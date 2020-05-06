@@ -9,7 +9,7 @@ import jwt
 import os
 import datetime
 
-BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+BASE_DIR = os.environ['BASE_PATH']
 # Create your views here.
 def vmlist_view(request):
     conn= KVMConnection()
