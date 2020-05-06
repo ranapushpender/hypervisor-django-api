@@ -1,0 +1,2 @@
+[pushpender@Pushpender-R5 websockify]$ sudo docker run --rm -v /home/pushpender/Apps/hypervisor-django-api/websockify:/src/app --network host -it 7ce2fbcfd162 /bin/sh
+
