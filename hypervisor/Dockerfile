@@ -20,4 +20,4 @@ RUN pip3 install asyncio
 RUN pip3 install pyjwt
 RUN apt install virt-manager -y
 EXPOSE 8000/tcp
-CMD ["/bin/bash"]
+CMD python3 manage.py runserver 0.0.0.0:8000
