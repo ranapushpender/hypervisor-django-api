@@ -1,7 +1,7 @@
 version: "3.4"
 services:
   api:
-    image: docker.pkg.github.com/ranapushpender/hypervisor-django-api/hypervisor-django-api_api:latest
+    build: ./hypervisor
     ports:
       - 8000:8000
     volumes:
@@ -13,14 +13,14 @@ services:
     environment:
       - BASE_PATH=/home/pushpender/Projects/hypervisor-django-api/hypervisor
   websockify:
-    image: docker.pkg.github.com/ranapushpender/hypervisor-django-api/websockify:latest
+    build: ./websockify
     ports:
       - 6080:6080
     volumes:
       - ./websockify:/src/app
     network_mode: host
   terminal:
-    image: docker.pkg.github.com/ranapushpender/hypervisor-django-api/docker-terminal:latest
+    build: ./docker-console
     ports:
       - 8766:8766
     volumes:

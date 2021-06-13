@@ -1,4 +1,4 @@
-FROM alpine
+FROM alpine:3.10
 RUN apk add --no-cache python3
 RUN python3 -m pip install asyncio
 RUN python3 -m pip install pyjwt
